@@ -1,5 +1,56 @@
+% 
+% 
+% Программа сборки кубика Рубика 2х2х2
+%
+% В качестве результата выводит формулу для сборки кубика. 
+% Формула имеет вид
+% U F' R F R',
+% где 	F - передняя грань (front)
+%		B - задняя грань (bottom)
+%		L  левая грань (left)
+% 		R - правая грань (right)
+%		U - верхняя грань (up)
+%		D - нижняя грань (down)
+% Просто символ означает поворот грани по часовой стрелке,
+% символ со штрихом означает поворот грани против часовой стрелки
+%
+% В качестве результата даются две формулы - простая и сокращённая.
+% В простой формуле отсутствуют повороты против часовой стрелки
 
-% старт сборки кубика
+% пример запуска
+init_cube :-
+	% цвета грани задаются по часовой стрелке
+	collect(
+		% передняя грань
+		red, orange, white, orange,
+		% задняя грань
+		blue, green, red, white,
+		% левая грань
+		orange, yellow, blue, white,
+		% правая грань
+		green, yellow, blue, red,
+		% верхняя грань
+		yellow, red, white, green,
+		% нижняя грань
+		yellow, green, orange, blue).
+
+%  пример собранного кубика
+init_correct :-
+	collect(
+		red, red, red, red,
+		blue, blue, blue, blue,
+		orange, orange, orange, orange,
+		green, green, green, green,
+		yellow, yellow, yellow, yellow,
+		white, white, white, white).
+
+%
+% Начинает сборку кубика. При удачном завершении сборки
+% выводит текущую конфигурацию кубика и формулы для его сборки
+%
+% Пример простой формулы: F U U U R
+% Пример сокращённой формулы: F U' R
+%
 collect(
 	F1, F2, F3, F4, 
 	B1, B2, B3, B4,
@@ -18,7 +69,7 @@ collect(
 		write('\n'),
 		print_condensed_form, !.
 
-% если кубик собран, вывести цвета граней
+% если кубик собран, вывести текущую конфигурацию кубика
 collect_cube(
 	F1, F2, F3, F4, 
 	B1, B2, B3, B4,
@@ -79,6 +130,12 @@ insert_step(S) :-
 	retractall(steps(_)),
 	assert(steps(StepsS)).
 
+% вывести список шагов для сборки кубика
+print_steps :- 
+	write('Формула для сборки:\n'),
+	clause(steps(Steps), _),
+	print_list(Steps), !.
+
 % вывести содержимое списка на экран через пробел
 print_list([]).
 print_list([H]) :- write(H).
@@ -87,6 +144,8 @@ print_list([H|T]) :-
 	print_list(T).
 
 % сокращённая формула сборки
+% если в формуле обнаружатся три одинаковых поворота по часовой стрелке,
+% они будут заменены на один поворот против часовой стрелки
 condensed_form([]).
 condensed_form([H|T]) :- condensed_form(H, T), !.
 condensed_form([H|T]) :- concat(H, ' ', S), write(S), condensed_form(T).
@@ -95,18 +154,13 @@ condensed_form(A, B, [H|T]) :- A == B, B == H, condensed_form(A, B, H, T).
 condensed_form(A, B, C, [H|T]) :- A == B, B == C, concat(A, ''' ', S), write(S), condensed_form([H|T]).
 condensed_form(A, B, C, []) :- A == B, B == C, concat(A, ''' ', S), write(S).
 
+% преобразовать обычную формулу в сокращённую и вывести ее на экран
 print_condensed_form :-
 	write('Сокращённая форма:\n'),
 	clause(steps(Steps), _),
 	condensed_form(Steps), !.
 
-% вывести список шагов для сборки кубика
-print_steps :- 
-	write('Формула для сборки:\n'),
-	clause(steps(Steps), _),
-	print_list(Steps), !.
-
-% распечатывает конфигурацию кубика
+% распечатывает конфигурацию кубика и сколько ходов понадобилось для его сборки
 print_step(
 	F1, F2, F3, F4, 
 	B1, B2, B3, B4,
@@ -125,7 +179,6 @@ print_step(
 
 % проверяет количество сделанных шагов
 % если возможен ещё один шаг - делает его
-% если кубик оказался собран - выводит список поворотов, начиная с последнего
 check_and_rotate(
 	F1, F2, F3, F4, 
 	B1, B2, B3, B4,
@@ -143,7 +196,8 @@ check_and_rotate(
 			U1, U2, U3, U4,
 			D1, D2, D3, D4, IncStepCount). 
 
-% проверяет, что количество шагов не превышено. Если перевалит за 14, то false
+% Кубик можно собрать из любой конфигурации за 14 шагов. 
+% Так что, если количество шагов превысило 14, возвращается false
 check_step(StepCount) :- StepCount =< 14.
 
 % поворот передней грани на 90 градусов по часовой стрелке
@@ -214,35 +268,3 @@ check_cube(
 
 % проверяет, совпадают ли цвета грани
 check_side(W, X, Y, Z) :- W == X, X == Y, Y == Z.  
-
-% примеры создания кубиков
-
-% сейчас у меня такой кубик
-init :-
-	collect(
-		red, orange, white, orange,
-		blue, green, red, white,
-		orange, yellow, blue, white,
-		green, yellow, blue, red,
-		yellow, red, white, green,
-		yellow, green, orange, blue).
-
-%  собранный кубик
-init_correct :-
-	collect(
-		red, red, red, red,
-		blue, blue, blue, blue,
-		orange, orange, orange, orange,
-		green, green, green, green,
-		yellow, yellow, yellow, yellow,
-		white, white, white, white).
-
-%  почти собранный кубик
-init_correct_2 :-
-	collect(
-		red, red, red, red,
-		blue, blue, blue, blue,
-		orange, white, white, orange,
-		yellow, green, green, yellow,
-		yellow, yellow, orange, orange,
-		green, green, white, white).
